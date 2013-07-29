@@ -97,7 +97,7 @@
     requiresAuth: true,
     parse: function(resp) {
       if (resp.result) {
-        return resp.result;
+        resp = resp.result;
       }
       return resp;
     }
@@ -115,7 +115,7 @@
     requiresAuth: true,
     parse: function(resp) {
       if (resp.result) {
-        return resp.result;
+        resp = resp.result;
       }
       return resp;
     }

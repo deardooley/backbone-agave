@@ -24,5 +24,16 @@
     }
   });
 
+  Jobs.JobHistory = Agave.Model.extend({
+    urlRoot: '/apps-v1/jobs/list',
+    sync: function(method, model, options) {
+      if (method === 'create') {
+        options.emulateJSON = true;
+        options.data = model.toJSON();
+      }
+      return Agave.sync(method, model, options);
+    }
+  });
+
   return Jobs;
 })(this);
