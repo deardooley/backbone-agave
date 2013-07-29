@@ -1,5 +1,5 @@
 {
-    "name": "Backbone-Agave",
+    "name": "backbone-agave",
     "version": "0.1.0",
     "main": "./backbone-agave.js",
     "dependencies": {
