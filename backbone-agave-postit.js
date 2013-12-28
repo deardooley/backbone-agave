@@ -11,17 +11,17 @@
 
   var Agave = Backbone.Agave;
 
-  var PostIt = Agave.PostIt = {};
+  var PostIts = Agave.PostIts = {};
 
-  PostIt.PostIt = Agave.Model.extend({
-    idAttribute: 'token',
-    urlRoot: '/postit-v1/'
+  PostIts.PostIt = Agave.Model.extend({
+    idAttribute: 'postit',
+    urlRoot: '/postits/'
   });
 
-  PostIt.ActivePostIts = Agave.Collection.extend({
-    model: PostIt.PostIt,
-    url: '/postit-v1/'
+  PostIts.ActivePostIts = Agave.Collection.extend({
+    model: PostIts.PostIt,
+    url: '/postits/'
   });
 
-  return PostIt;
+  return PostIts;
 })(this);

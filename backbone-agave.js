@@ -28,15 +28,19 @@
 
       // look for token in global variable
       else if (window.AGAVE_TOKEN && window.AGAVE_USERNAME) {
-        this.setToken({
-          'token': window.AGAVE_TOKEN,
-          'username': window.AGAVE_USERNAME
+        this.token({
+          'access_token': window.AGAVE_TOKEN,
+          'username': window.AGAVE_USERNAME,
+          'client_key': window.AGAVE_CLIENT_KEY,
+          'client_secret': window.AGAVE_CLIENT_SECRET
         });
       }
 
       if (defaults.primary) {
         Agave.instance = this;
       }
+      
+      this.develMode = window.AGAVE_DEVEL;
     };
 
   _.extend(Agave.prototype, Backbone.Events, {
@@ -55,32 +59,72 @@
     }
   });
 
-  Agave.agaveApiRoot = 'https://foundation.iplantcollaborative.org';
-
+  Agave.agaveApiRoot = 'https://agave.iplantc.org';
+  Agave.agaveDevelApiRoot = 'https://iplant-qa.tacc.utexas.edu';
+  
   // Custom sync function to handle Agave token auth
   Agave.sync = function(method, model, options) {
-    options.url = Agave.agaveApiRoot + (options.url || _.result(model, 'url'));
+  	if (Agave.develMode) {
+		options.url = Agave.agaveDevelApiRoot + (options.url || _.result(model, 'url'));
+	} else {
+		options.url = Agave.agaveApiRoot + (options.url || _.result(model, 'url'));
+	}
 
-    if (model.requiresAuth) {
-      var agaveToken = options.agaveToken || model.agaveToken || Agave.instance.token();
+	var agaveToken = options.agaveToken || model.agaveToken || Agave.instance.token();
 
-      // Credentials for Basic Authentication
-      // Use credentials provided in options first; otherwise used current session creds.
-      var username = options.username || (agaveToken ? agaveToken.get('username') : '');
-      var password = options.password || (agaveToken ? agaveToken.id : '');
-
-      // Allow user-provided before send, but protect ours, too.
-      if (options.beforeSend) {
-        options._beforeSend = options.beforeSend;
-      }
-      options.beforeSend = function(xhr) {
-        if (options._beforeSend) {
-          options._beforeSend(xhr);
-        }
-        xhr.setRequestHeader('Authorization', 'Basic ' + btoa(username + ':' + password));
-      };
-    }
-
+	// Credentials for Basic Authentication
+	if (options.develMode) {
+	{
+		var username = options.client_secret || (agaveToken ? agaveToken.get('username') : '');
+		
+		// Allow user-provided before send, but protect ours, too.
+		if (options.beforeSend) {
+			options._beforeSend = options.beforeSend;
+		}
+		options.beforeSend = function(xhr) {
+			if (options._beforeSend) {
+			  options._beforeSend(xhr);
+			}
+			var jwtPrefix="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ=="
+			var jwtBody = btoa("{\"iss\":\"wso2.org/products/am\",\"exp\":2384481713842,\"http://wso2.org/claims/subscriber\":\"" + username + "\",\"http://wso2.org/claims/applicationid\":\"5\",\"http://wso2.org/claims/applicationname\":\"DefaultApplication\",\"http://wso2.org/claims/applicationtier\":\"Unlimited\",\"http://wso2.org/claims/apicontext\":\"/apps\",\"http://wso2.org/claims/version\":\"2.0\",\"http://wso2.org/claims/tier\":\"Unlimited\",\"http://wso2.org/claims/keytype\":\"PRODUCTION\",\"http://wso2.org/claims/usertype\":\"APPLICATION_USER\",\"http://wso2.org/claims/enduser\":\"" + username + "\",\"http://wso2.org/claims/enduserTenantId\":\"-9999\", \"http://wso2.org/claims/emailaddress\":\"" + username + "@test.com\", \"http://wso2.org/claims/fullname\":\"Dev User\", \"http://wso2.org/claims/givenname\":\"Dev\", \"http://wso2.org/claims/lastname\":\"User\", \"http://wso2.org/claims/primaryChallengeQuestion\":\"N/A\", \"http://wso2.org/claims/role\":\"Internal/everyone\", \"http://wso2.org/claims/title\":\"N/A\"}";
+			var jwtSuffix="FA6GZjrB6mOdpEkdIQL/p2Hcqdo2QRkg/ugBbal8wQt6DCBb1gC6wPDoAenLIOc+yDorHPAgRJeLyt2DutNrKRFv6czq1wz7008DrdLOtbT4EKI96+mXJNQuxrpuU9lDZmD4af/HJYZ7HXg3Hc05+qDJ+JdYHfxENMi54fXWrxs="
+			xhr.setRequestHeader('x-jwt-assertion-iplantc-org', jwtPrefix + jwtBody + jwtSuffix);
+		};
+	}
+	else if (options.basicAuth = true)
+	{
+		// Use credentials provided in options first; otherwise used current session creds.
+		var client_secret = options.client_secret || (agaveToken ? agaveToken.get('client_secret') : '');
+		var client_key = options.client_key || (agaveToken ? agaveToken.get('client_key') : '');
+		
+		// Allow user-provided before send, but protect ours, too.
+		if (options.beforeSend) {
+			options._beforeSend = options.beforeSend;
+		}
+		options.beforeSend = function(xhr) {
+			if (options._beforeSend) {
+			  options._beforeSend(xhr);
+			}
+			xhr.setRequestHeader('Authorization', 'Basic ' + btoa(client_secret + ':' + client_key));
+		};
+	}
+	else
+	{
+		// Use credentials provided in options first; otherwise used current session creds.
+		var accessToken = options.access_token || (agaveToken ? agaveToken.id : '');
+		
+		// Allow user-provided before send, but protect ours, too.
+		if (options.beforeSend) {
+			options._beforeSend = options.beforeSend;
+		}
+		options.beforeSend = function(xhr) {
+			if (options._beforeSend) {
+			  options._beforeSend(xhr);
+			}
+			xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+		};
+	}
+	    
     // Call default sync
     return Backbone.sync(method, model, options);
   };
@@ -126,25 +170,27 @@
 
   Auth.Token = Agave.Model.extend({
     defaults: {
-      'token': null,
+      'access_token': null,
       'username': null,
-      'expires': null,
-      'created': null,
-      'creator': null,
-      'renewed': null,
-      'remaining_uses': null
+      'expires_in': null,
+      'expires_at': null,
+      'refresh_token': null,
+      'client_secret': null,
+      'client_key': null
     },
     idAttribute: 'token',
-    url: '/auth-v1/',
+    url: '/token',
     sync: function(method, model, options) {
       switch (method) {
       case 'update':
-        options.url = model.url + 'renew';
+      	options.basicAuth = true;
+        options.url = model.url;
         options.type = 'POST';
-        options.data = 'token=' + model.id;
+        options.data = 'grant_type=refresh_token&refresh_token=' + model.refresh_token + "&scope=PRODUCTION";
         break;
 
       case 'delete':
+      	options.basicAuth = true;
         options.agaveToken = model;
         break;
       }
@@ -159,7 +205,7 @@
       if (!(attrs.token || options.token || options.password)) {
         errors.token = 'A Token or Password is required';
       }
-      if (attrs.expires && (attrs.expires * 1000 - Date.now() <= 0)) {
+      if (attrs.expires && (attrs.expires_at - Date.now() <= 0)) {
         errors.expires = 'Token is expired';
       }
       if (! _.isEmpty(errors)) {
@@ -167,20 +213,20 @@
       }
     },
     expiresIn: function() {
-      return Math.max(0, this.get('expires') * 1000 - Date.now());
+      return Math.max(0, this.get('expires_at') - Date.now());
     },
     getBase64: function() {
-      return btoa(this.get('username') + ':' + this.id);
+      return btoa(this.get('client_secret') + ':' + this.id);
     }
   }),
 
-  Auth.ActiveTokens = Agave.Collection.extend({
-    model: Auth.Token,
-    url: '/auth-v1/list',
-    comparator: function(token) {
-        return -token.get('created');
-      }
-  });
+  // Auth.ActiveTokens = Agave.Collection.extend({
+//     model: Auth.Token,
+//     url: '/auth-v1/list',
+//     comparator: function(token) {
+//         return -token.get('created');
+//       }
+//   });
 
   Backbone.Agave = Agave;
   return Agave;
