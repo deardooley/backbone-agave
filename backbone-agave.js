@@ -75,7 +75,7 @@
 	// Credentials for Basic Authentication
 	if (options.develMode) {
 	{
-		var username = options.client_secret || (agaveToken ? agaveToken.get('username') : '');
+		var username = options.username || (agaveToken ? agaveToken.get('username') : '');
 		
 		// Allow user-provided before send, but protect ours, too.
 		if (options.beforeSend) {
@@ -178,7 +178,7 @@
       'client_secret': null,
       'client_key': null
     },
-    idAttribute: 'token',
+    idAttribute: 'access_token',
     url: '/token',
     sync: function(method, model, options) {
       switch (method) {
@@ -187,6 +187,7 @@
         options.url = model.url;
         options.type = 'POST';
         options.data = 'grant_type=refresh_token&refresh_token=' + model.refresh_token + "&scope=PRODUCTION";
+        options.success = function(
         break;
 
       case 'delete':
@@ -205,18 +206,30 @@
       if (!(attrs.token || options.token || options.password)) {
         errors.token = 'A Token or Password is required';
       }
-      if (attrs.expires && (attrs.expires_at - Date.now() <= 0)) {
+      if (!(attrs.client_secret || attrs.client_key ||options.client_secret || options.client_key)) {
+        errors.token = 'Your client secret and key are required';
+      }
+      if (attrs.expires_at && (attrs.expires_at - Date.now() <= 0)) {
         errors.expires = 'Token is expired';
       }
       if (! _.isEmpty(errors)) {
         return errors;
       }
     },
+    parse: function(resp, options) {
+      if (resp.access_token) {
+        resp.set("username", username);
+        resp.set('expires_at', Date.now() + (resp.expires_in * 1000));
+        resp.set('client_key', options.client_key);
+        resp.set('client_secret', options.client_secret);
+      }
+      return resp;
+    },
     expiresIn: function() {
       return Math.max(0, this.get('expires_at') - Date.now());
     },
     getBase64: function() {
-      return btoa(this.get('client_secret') + ':' + this.id);
+      return btoa(this.get('client_secret') + ':' + this.get('client_key'));
     }
   }),
 
