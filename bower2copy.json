@@ -1,0 +1,10 @@
+{
+  "name": "backbone-agave",
+  "version": "1.0.0",
+  "main": "./backbone-agave.js",
+  "dependencies": {
+    "backbone": "~1.0.0",
+    "underscore": "~1.5.1",
+    "jquery": "~2.0.3"
+  }
+}
