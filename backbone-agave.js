@@ -27,10 +27,13 @@
       }
 
       // look for token in global variable
-      else if (window.AGAVE_TOKEN && window.AGAVE_USERNAME) {
+      else if ((window.AGAVE_TOKEN && window.AGAVE_USERNAME) ) {
         this.token({
           'access_token': window.AGAVE_TOKEN,
           'username': window.AGAVE_USERNAME,
+          'password': window.AGAVE_PASSWORD,
+          'expires_in': 3600000,
+          'expires_at': Date.now(),
           'client_key': window.AGAVE_CLIENT_KEY,
           'client_secret': window.AGAVE_CLIENT_SECRET
         });
@@ -40,7 +43,6 @@
         Agave.instance = this;
       }
       
-      this.develMode = window.AGAVE_DEVEL;
     };
 
   _.extend(Agave.prototype, Backbone.Events, {
@@ -48,7 +50,18 @@
     constructor: Agave,
 
     token: function(options) {
-      if (options) {
+      if (window.AGAVE_DEVEL) {
+		  this._token.set({
+			  'access_token': window.AGAVE_TOKEN ?  window.AGAVE_TOKEN : 'abc1234',
+			  'username': window.AGAVE_USERNAME ? window.AGAVE_USERNAME : 'dooley',
+			  'password': window.AGAVE_PASSWORD ? window.AGAVE_PASSWORD : 'password',
+			  'expires_in': 3600000,
+			  'expires_at': Date.now() + 3600000,
+			  'client_key': window.AGAVE_CLIENT_KEY ? window.AGAVE_CLIENT_KEY : 'client_key',
+			  'client_secret': window.AGAVE_CLIENT_SECRET ? window.AGAVE_CLIENT_SECRET : 'client_secret'
+			});
+      } 
+      else if (options) {
         this._token.set(options);
       }
       return this._token;
@@ -61,6 +74,7 @@
 
   Agave.agaveApiRoot = 'https://agave.iplantc.org';
   Agave.agaveDevelApiRoot = 'https://iplant-qa.tacc.utexas.edu';
+  Agave.develMode = window.AGAVE_DEVEL;
   
   // Custom sync function to handle Agave token auth
   Agave.sync = function(method, model, options) {
@@ -73,7 +87,7 @@
 	var agaveToken = options.agaveToken || model.agaveToken || Agave.instance.token();
 
 	// Credentials for Basic Authentication
-	if (options.develMode)
+	if (Agave.develMode)
 	{
 		var username = options.username || (agaveToken ? agaveToken.get('username') : '');
 		
@@ -91,11 +105,14 @@
 			xhr.setRequestHeader('x-jwt-assertion-iplantc-org', jwtPrefix + jwtBody + jwtSuffix);
 		};
 	}
-	else if (options.basicAuth = true)
+	else if (options.basicAuth)
 	{
 		// Use credentials provided in options first; otherwise used current session creds.
-		var client_secret = options.client_secret || (agaveToken ? agaveToken.get('client_secret') : '');
-		var client_key = options.client_key || (agaveToken ? agaveToken.get('client_key') : '');
+		var client_secret = options.clientSecret || (agaveToken ? agaveToken.get('client_secret') : '');
+		var client_key = options.clientKey || (agaveToken ? agaveToken.get('client_key') : '');
+		
+		options.emulateJSON = true;
+		//options.data = model.toJSON();
 		
 		// Allow user-provided before send, but protect ours, too.
 		if (options.beforeSend) {
@@ -105,7 +122,9 @@
 			if (options._beforeSend) {
 			  options._beforeSend(xhr);
 			}
-			xhr.setRequestHeader('Authorization', 'Basic ' + btoa(client_secret + ':' + client_key));
+			xhr.setRequestHeader('Authorization', 'Basic ' + btoa(client_key + ':' + client_secret));
+			xhr.setRequestHeader('Accept', 'application/json');
+			xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 		};
 	}
 	else
@@ -122,9 +141,10 @@
 			  options._beforeSend(xhr);
 			}
 			xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+			xhr.setRequestHeader('Accept', 'application/json');
 		};
 	}
-	    
+	
     // Call default sync
     return Backbone.sync(method, model, options);
   };
@@ -173,10 +193,13 @@
       'access_token': null,
       'username': null,
       'expires_in': null,
-      'expires_at': null,
+      'expires_at': Date.now() + 3600000,
       'refresh_token': null,
       'client_secret': null,
-      'client_key': null
+      'client_key': null,
+      'grant_type': 'client_credentials',
+      'token_type': 'bearer',
+      'scope': 'PRODUCTION'
     },
     idAttribute: 'access_token',
     url: '/token',
@@ -199,17 +222,17 @@
     validate: function(attrs, options) {
       var errors = {};
       options = _.extend({}, options);
-      if (! attrs.username) {
-        errors.username = 'Username is required';
+      if (! attrs.access_token ) {
+        errors.access_token = 'Access token is required';
       }
-      if (!(attrs.token || options.token || options.password)) {
-        errors.token = 'A Token or Password is required';
-      }
-      if (!(attrs.client_secret || attrs.client_key ||options.client_secret || options.client_key)) {
-        errors.token = 'Your client secret and key are required';
-      }
+      // if (!(attrs.password)) {
+//         errors.access_token = 'A Password is required';
+//       }
+      // if (!(options.client_secret || options.client_key)) {
+//         errors.access_token = 'Your client secret and key are required';
+//       }
       if (attrs.expires_at && (attrs.expires_at - Date.now() <= 0)) {
-        errors.expires = 'Token is expired';
+        errors.expires_at = 'Token is expired';
       }
       if (! _.isEmpty(errors)) {
         return errors;
@@ -217,10 +240,10 @@
     },
     parse: function(resp, options) {
       if (resp.access_token) {
-        resp.set("username", username);
-        resp.set('expires_at', Date.now() + (resp.expires_in * 1000));
-        resp.set('client_key', options.client_key);
-        resp.set('client_secret', options.client_secret);
+        resp.username = options.data.username;
+        resp.expires_at = Date.now() + (resp.expires_in * 1000);
+        resp.client_key = options.clientKey;
+        resp.client_secret = options.clientSecret;
       }
       return resp;
     },
