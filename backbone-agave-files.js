@@ -21,15 +21,19 @@ IO.File = Agave.Model.extend({
     "path": null
   },
   idAttribute: "path",
-  urlRoot: "/io-v1/io",
+  urlRoot: "/files",
   url: function() {
-    return "/io-v1/io" + this.id;
+    return "/files/media" + this.id;
   },
   modelUrl: function() {
-    return '/io-v1/io' + this.id;
+    return '/files/media' + this.id;
   },
   downloadUrl: function() {
-    return Agave.agaveApiRoot + '/io-v1/io' + this.id;
+  	if (Agave.develMode) {
+	    return Agave.agaveDevelApiRoot + '/files/media/system/' + this.system() + "/" + this.id;
+	} else {
+		return Agave.agaveApiRoot + '/files/' + Agave.agaveVersion + '/media/system/' + this.system() + "/" + this.id;
+	}
   },
   directoryPath: function() {
     var path = this.get("path");
@@ -68,23 +72,49 @@ IO.File = Agave.Model.extend({
     } else {
       return result;
     }
+  },
+  system: function() {
+	var sys = this.attributes._links.system.href;
+	return sys.substring(sys.lastIndexOf("/") + 1);
   }
+    
 });
 
 IO.FilePermissions = Agave.Model.extend({
   idAttribute: "path",
+  initialize: function(attributes, options) {
+    this.system = (options != undefined && 'system' in options) ? options.system : attributes.system;
+    this.path = (options != undefined && 'path' in options) ? options.path : attributes.path;
+  },
   url: function() {
-    return '/io-v1/io/share' + this.id;
+    return "/files/pems/system/" + this.system + "/" + this.path;
   }
+});
+
+IO.History = Agave.Model.extend({
+    idAttribute: 'created',
+    urlRoot: "/files/history/"
+});
+
+IO.HistoryListing = Agave.Collection.extend({
+    model: IO.History,
+    initialize: function(attributes, options) {
+    	this.system = (options != undefined && 'system' in options) ? options.system : attributes.system;
+    	this.path = (options != undefined && 'path' in options) ? options.path : attributes.path;
+  	},
+  	url: function() {
+    	return "/files/history/system/" + this.system + "/" + this.path;
+  	}
 });
 
 IO.Listing = Agave.Collection.extend({
   model: IO.File,
   initialize: function(models, options) {
     this.path = options.path;
+    this.system = options.system;
   },
   url: function() {
-    return "/io-v1/io/list/" + this.path;
+    return "/files/listings/system/" + this.system + "/" + this.path;
   },
   comparator: function(model) {
     return [model.get("type"), model.get("name")];
@@ -93,18 +123,19 @@ IO.Listing = Agave.Collection.extend({
 
 IO.Share = Agave.Model.extend({
   initialize: function(attributes, options) {
-    this.file = this.options.file;
+    this.file = options.file;
+    this.system = attributes.system;
   },
   url: function() {
     var owner = this.file.get("owner"),
       path = this.file.get("path");
-    if (owner && path) {
-      return "/io-v1/io/share/" + owner + "/" + path;
+    if (path) {
+      return "/files/pems/system/" + this.system + "/" + path;
     }
   },
   shareLink: function() {
     if (this.isPublic()) {
-      return Agave.agaveApiRoot + "/io-v1/io/download/" + this.file.get("owner") + this.file.get("path");
+      return Agave.agaveApiRoot + "/files/download/system/" + this.system + "/" + this.file.get("owner") + this.file.get("path");
     }
   }
 });

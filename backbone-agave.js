@@ -69,12 +69,39 @@
 
     destroyToken: function() {
       this._token.destroy();
-    }
+    },
+    
+    isDevelMode: function() {
+    	return Agave.develMode;
+    },
+    authValue: function(username) {
+    	if (Agave.develMode) {
+			var jwtPrefix="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==";
+			var jwtBody = btoa("{\"iss\":\"wso2.org/products/am\",\"exp\":2384481713842,\"http://wso2.org/claims/subscriber\":\"" + username + "\",\"http://wso2.org/claims/applicationid\":\"5\",\"http://wso2.org/claims/applicationname\":\"DefaultApplication\",\"http://wso2.org/claims/applicationtier\":\"Unlimited\",\"http://wso2.org/claims/apicontext\":\"/apps\",\"http://wso2.org/claims/version\":\"2.0\",\"http://wso2.org/claims/tier\":\"Unlimited\",\"http://wso2.org/claims/keytype\":\"PRODUCTION\",\"http://wso2.org/claims/usertype\":\"APPLICATION_USER\",\"http://wso2.org/claims/enduser\":\"" + username + "\",\"http://wso2.org/claims/enduserTenantId\":\"-9999\", \"http://wso2.org/claims/emailaddress\":\"" + username + "@test.com\", \"http://wso2.org/claims/fullname\":\"Dev User\", \"http://wso2.org/claims/givenname\":\"Dev\", \"http://wso2.org/claims/lastname\":\"User\", \"http://wso2.org/claims/primaryChallengeQuestion\":\"N/A\", \"http://wso2.org/claims/role\":\"Internal/everyone\", \"http://wso2.org/claims/title\":\"N/A\"}");
+			var jwtSuffix="FA6GZjrB6mOdpEkdIQL/p2Hcqdo2QRkg/ugBbal8wQt6DCBb1gC6wPDoAenLIOc+yDorHPAgRJeLyt2DutNrKRFv6czq1wz7008DrdLOtbT4EKI96+mXJNQuxrpuU9lDZmD4af/HJYZ7HXg3Hc05+qDJ+JdYHfxENMi54fXWrxs=";
+			return jwtPrefix + '.' + jwtBody + '.' + jwtSuffix;
+		} else {
+			var client_secret = (this._token ? this._token.get('client_secret') : '');
+			var client_key = (this._token ? this._token.get('client_key') : '');
+			return btoa('Basic ' + btoa(client_key + ':' + client_secret));
+		}
+	},
+	authHeader: function() {
+		if (Agave.develMode) {
+			return 'x-jwt-assertion-' + Agave.tenatId.replace(/\./g,'-');
+		} else {
+			return 'Authorization';
+		}
+	}
+    
+    
   });
 
   Agave.agaveApiRoot = 'https://agave.iplantc.org';
-  Agave.agaveDevelApiRoot = 'https://iplant-qa.tacc.utexas.edu';
+  Agave.agaveVersion = '2.0';
+  Agave.agaveDevelApiRoot = 'https://iplant-qa.tacc.utexas.edu/v2';
   Agave.develMode = window.AGAVE_DEVEL;
+  Agave.tenatId = window.AGAVE_TENANT || 'iplantc.org';
   
   // Custom sync function to handle Agave token auth
   Agave.sync = function(method, model, options) {
@@ -99,10 +126,8 @@
 			if (options._beforeSend) {
 			  options._beforeSend(xhr);
 			}
-			var jwtPrefix="eyJ0eXAiOiJKV1QiLCJhbGciOiJTSEEyNTZ3aXRoUlNBIiwieDV0IjoiTm1KbU9HVXhNelpsWWpNMlpEUmhOVFpsWVRBMVl6ZGhaVFJpT1dFME5XSTJNMkptT1RjMVpBPT0ifQ==";
-			var jwtBody = btoa("{\"iss\":\"wso2.org/products/am\",\"exp\":2384481713842,\"http://wso2.org/claims/subscriber\":\"" + username + "\",\"http://wso2.org/claims/applicationid\":\"5\",\"http://wso2.org/claims/applicationname\":\"DefaultApplication\",\"http://wso2.org/claims/applicationtier\":\"Unlimited\",\"http://wso2.org/claims/apicontext\":\"/apps\",\"http://wso2.org/claims/version\":\"2.0\",\"http://wso2.org/claims/tier\":\"Unlimited\",\"http://wso2.org/claims/keytype\":\"PRODUCTION\",\"http://wso2.org/claims/usertype\":\"APPLICATION_USER\",\"http://wso2.org/claims/enduser\":\"" + username + "\",\"http://wso2.org/claims/enduserTenantId\":\"-9999\", \"http://wso2.org/claims/emailaddress\":\"" + username + "@test.com\", \"http://wso2.org/claims/fullname\":\"Dev User\", \"http://wso2.org/claims/givenname\":\"Dev\", \"http://wso2.org/claims/lastname\":\"User\", \"http://wso2.org/claims/primaryChallengeQuestion\":\"N/A\", \"http://wso2.org/claims/role\":\"Internal/everyone\", \"http://wso2.org/claims/title\":\"N/A\"}");
-			var jwtSuffix="FA6GZjrB6mOdpEkdIQL/p2Hcqdo2QRkg/ugBbal8wQt6DCBb1gC6wPDoAenLIOc+yDorHPAgRJeLyt2DutNrKRFv6czq1wz7008DrdLOtbT4EKI96+mXJNQuxrpuU9lDZmD4af/HJYZ7HXg3Hc05+qDJ+JdYHfxENMi54fXWrxs=";
-			xhr.setRequestHeader('x-jwt-assertion-iplantc-org', jwtPrefix + jwtBody + jwtSuffix);
+			
+			xhr.setRequestHeader( Agave.prototype.authHeader(), Agave.prototype.authValue(username));			
 		};
 	}
 	else if (options.basicAuth)

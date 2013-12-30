@@ -19,12 +19,12 @@ Apps.Application = Agave.Model.extend({
   defaults: {
     "name":null
   },
-  urlRoot: "/apps-v1/apps/"
+  urlRoot: "/apps/"
 });
 
-Apps.PublicApplications = Agave.Collection.extend({
+Apps.Applications = Agave.Collection.extend({
   model: Apps.Application,
-  url: "/apps-v1/apps/list",
+  url: "/apps/",
   requiresAuth: false,
   comparator: function(app) {
     return app.get("name").toLowerCase();
@@ -35,7 +35,7 @@ Apps.PublicApplicationsNamed = Agave.Collection.extend({
   model: Apps.Application,
   requiresAuth: false,
   url: function() {
-    return "/apps-v1/apps/name/" + this.name;
+    return "/apps/name/" + this.name;
   }
 });
 
@@ -43,7 +43,7 @@ Apps.PublicApplicationsTagged = Agave.Collection.extend({
   model: Apps.Application,
   requiresAuth: false,
   url: function() {
-    return "/apps-v1/apps/tag/" + this.tag;
+    return "/apps/tag/" + this.tag;
   }
 });
 
@@ -51,33 +51,17 @@ Apps.PublicApplicationsTermed = Agave.Collection.extend({
   model: Apps.Application,
   requiresAuth: false,
   url: function() {
-    return "/apps-v1/apps/term/" + this.term;
+    return "/apps/ontology/" + this.term;
   }
 });
 
-Apps.SharedApplications = Agave.Collection.extend({
-  model: Apps.Application,
-  url: "/apps-v1/apps/shared/list"
-});
-
-Apps.SharedApplicationsNamed = Agave.Collection.extend({
-  model: Apps.Application,
+Apps.AppPermissions = Agave.Model.extend({
+  idAttribute: "id",
+  initialize: function(attributes, options) {
+    this.system = this.options.system;
+  },
   url: function() {
-    return "/apps-v1/apps/shared/name/" + this.name;
-  }
-});
-
-Apps.SharedApplicationsTagged = Agave.Collection.extend({
-  model: Apps.Application,
-  url: function() {
-    return "/apps-v1/apps/shared/tag/" + this.tag;
-  }
-});
-
-Apps.SharedApplicationsTermed = Agave.Collection.extend({
-  model: Apps.Application,
-  url: function() {
-    return "/apps-v1/apps/shared/term/" + this.term;
+    return "/apps/" + this.id + "/pems/";
   }
 });
 
