@@ -55,15 +55,54 @@ Apps.PublicApplicationsTermed = Agave.Collection.extend({
   }
 });
 
-Apps.AppPermissions = Agave.Model.extend({
-  idAttribute: "id",
-  initialize: function(attributes, options) {
-    this.system = this.options.system;
+Apps.AppPermission = Agave.Model.extend({
+  idAttribute: "username",
+  defaults: {
+    "appId": null,
+    "username" : null
   },
   url: function() {
-    return "/apps/" + this.id + "/pems/";
-  }
+  	return "/apps/" + this.attributes.appId + "/pems/" + this.attributes.username;
+  },
+  getPermissionName: function() {
+  	if (this.attributes.read) {
+  		if (this.attributes.write) {
+  			if (this.attributes.execute) {
+  				return 'ALL';
+  			} else {
+  				return 'READ_WRITE';
+  			}
+  		} else if (this.attributes.execute) {
+  			return 'READ_EXECUTE';
+  		} else {
+  			return 'READ';
+  		}
+  	} else if (this.attributes.write) {
+  		if (this.attributes.execute) {
+  			return 'WRITE_EXECUTE';
+  		} else {
+  			return 'WRITE';
+  		}
+  	} else if (this.attributes.execute) {
+  			return 'EXECUTE';
+  	} else {
+  		return 'NONE';
+  	}
+  }		
 });
+
+Apps.AppPermissionList = Agave.Collection.extend({
+  model: Apps.AppPermission,
+  initialize: function(attributes, options) {
+    this.appId = attributes.id;
+  },
+  url: function() {
+  	return "/apps/" + this.appId + "/pems/";
+  },
+  requiresAuth: false
+});
+
+
 
 return Apps;
 })(this);

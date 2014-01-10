@@ -55,8 +55,8 @@
 			  'access_token': window.AGAVE_TOKEN ?  window.AGAVE_TOKEN : 'abc1234',
 			  'username': window.AGAVE_USERNAME ? window.AGAVE_USERNAME : 'dooley',
 			  'password': window.AGAVE_PASSWORD ? window.AGAVE_PASSWORD : 'password',
-			  'expires_in': 3600000,
-			  'expires_at': Date.now() + 3600000,
+			  'expires_in': 36000000,
+			  'expires_at': Date.now() + 36000000,
 			  'client_key': window.AGAVE_CLIENT_KEY ? window.AGAVE_CLIENT_KEY : 'client_key',
 			  'client_secret': window.AGAVE_CLIENT_SECRET ? window.AGAVE_CLIENT_SECRET : 'client_secret'
 			});

@@ -23,10 +23,18 @@ IO.File = Agave.Model.extend({
   idAttribute: "path",
   urlRoot: "/files",
   url: function() {
-    return "/files/media" + this.id;
+  	if (Agave.develMode) {
+	    return '/files/media/system/' + this.system() + "/" + this.id;
+	} else {
+		return '/files/' + Agave.agaveVersion + '/media/system/' + this.system() + "/" + this.id;
+	}
   },
   modelUrl: function() {
-    return '/files/media' + this.id;
+    if (Agave.develMode) {
+	    return '/files/media/system/' + this.system() + "/" + this.id;
+	} else {
+		return '/files/' + Agave.agaveVersion + '/media/system/' + this.system() + "/" + this.id;
+	}
   },
   downloadUrl: function() {
   	if (Agave.develMode) {
