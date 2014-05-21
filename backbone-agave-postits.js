@@ -15,12 +15,12 @@
 
   PostIts.PostIt = Agave.Model.extend({
     idAttribute: 'postit',
-    urlRoot: '/postits/'
+    urlRoot: '/postits/v2/'
   });
 
   PostIts.ActivePostIts = Agave.Collection.extend({
     model: PostIts.PostIt,
-    url: '/postits/'
+    url: '/postits/v2/'
   });
 
   return PostIts;

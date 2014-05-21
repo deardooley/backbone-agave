@@ -14,25 +14,34 @@
   var Jobs = Agave.Jobs = {};
 
   Jobs.Job = Agave.Model.extend({
-    urlRoot: '/apps-v1/job',
-    sync: function(method, model, options) {
-      if (method === 'create') {
-        options.emulateJSON = true;
-        options.data = model.toJSON();
-      }
-      return Agave.sync(method, model, options);
+    idAttribute: "id",
+    urlRoot: "/jobs/v2/"
+  });
+
+  Jobs.Jobs = Agave.Collection.extend({
+    model: Jobs.Job,
+    url: "/jobs/v2/"
+  });
+
+  Jobs.History = Agave.Model.extend({
+    urlRoot: "/jobs/v2/",
+    initialize: function() {
+      this.history = new Jobs.HistoryList();
+      this.history.url = this.urlRoot + this.id + '/history';
+      this.history.on("reset", this.updateCounts);
+    },
+    url: function() {
+      return this.urlRoot + this.jobId + "/history/";
     }
   });
 
-  Jobs.JobHistory = Agave.Model.extend({
-    urlRoot: '/apps-v1/jobs/list',
-    sync: function(method, model, options) {
-      if (method === 'create') {
-        options.emulateJSON = true;
-        options.data = model.toJSON();
-      }
-      return Agave.sync(method, model, options);
-    }
+  Jobs.HistoryList = Agave.Collection.extend({
+    model: Jobs.HistoryItem,
+  });
+
+  Jobs.HistoryItem = Agave.Model.extend({
+    idAttribute: "created",
+    urlRoot: "/jobs/v2/"
   });
 
   return Jobs;

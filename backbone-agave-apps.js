@@ -19,12 +19,12 @@ Apps.Application = Agave.Model.extend({
   defaults: {
     "name":null
   },
-  urlRoot: "/apps/"
+  urlRoot: "/apps/v2/"
 });
 
 Apps.Applications = Agave.Collection.extend({
   model: Apps.Application,
-  url: "/apps/",
+  url: "/apps/v2/",
   requiresAuth: false,
   comparator: function(app) {
     return app.get("name").toLowerCase();
@@ -43,7 +43,7 @@ Apps.PublicApplicationsTagged = Agave.Collection.extend({
   model: Apps.Application,
   requiresAuth: false,
   url: function() {
-    return "/apps/tag/" + this.tag;
+    return "/apps/v2/tag/" + this.tag;
   }
 });
 
@@ -51,7 +51,15 @@ Apps.PublicApplicationsTermed = Agave.Collection.extend({
   model: Apps.Application,
   requiresAuth: false,
   url: function() {
-    return "/apps/ontology/" + this.term;
+    return "/apps/v2/ontology/" + this.term;
+  }
+});
+
+Apps.SystemApplications = Agave.Collection.extend({
+  model: Apps.Application,
+  requiresAuth: false,
+  url: function() {
+    return "/apps/v2/system/" + this.models[0].attributes.id;
   }
 });
 
@@ -62,7 +70,7 @@ Apps.AppPermission = Agave.Model.extend({
     "username" : null
   },
   url: function() {
-  	return "/apps/" + this.attributes.appId + "/pems/" + this.attributes.username;
+  	return "/apps/v2/" + this.attributes.appId + "/pems/" + this.attributes.username;
   },
   getPermissionName: function() {
   	if (this.attributes.read) {
@@ -88,7 +96,7 @@ Apps.AppPermission = Agave.Model.extend({
   	} else {
   		return 'NONE';
   	}
-  }		
+  }
 });
 
 Apps.AppPermissionList = Agave.Collection.extend({
@@ -97,7 +105,7 @@ Apps.AppPermissionList = Agave.Collection.extend({
     this.appId = attributes.id;
   },
   url: function() {
-  	return "/apps/" + this.appId + "/pems/";
+  	return "/apps/v2/" + this.appId + "/pems/";
   },
   requiresAuth: false
 });

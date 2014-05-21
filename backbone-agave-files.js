@@ -1,5 +1,5 @@
 /**
- * Backbone Agave I/O
+ * Backbone Agave Files Models and Collections
  * Version 1.0.1
  *
  */
@@ -21,27 +21,27 @@ IO.File = Agave.Model.extend({
     "path": null
   },
   idAttribute: "path",
-  urlRoot: "/files",
+  urlRoot: "/files/v2",
   url: function() {
   	if (Agave.develMode) {
 	    return '/files/media/system/' + this.system() + "/" + this.id;
-	} else {
-		return '/files/' + Agave.agaveVersion + '/media/system/' + this.system() + "/" + this.id;
-	}
+  	} else {
+  		return '/files/' + Agave.agaveVersion + '/media/system/' + this.system() + "/" + this.id;
+  	}
   },
   modelUrl: function() {
     if (Agave.develMode) {
 	    return '/files/media/system/' + this.system() + "/" + this.id;
-	} else {
-		return '/files/' + Agave.agaveVersion + '/media/system/' + this.system() + "/" + this.id;
-	}
+  	} else {
+  		return '/files/' + Agave.agaveVersion + '/media/system/' + this.system() + "/" + this.id;
+  	}
   },
   downloadUrl: function() {
   	if (Agave.develMode) {
 	    return Agave.agaveDevelApiRoot + '/files/media/system/' + this.system() + "/" + this.id;
-	} else {
-		return Agave.agaveApiRoot + '/files/' + Agave.agaveVersion + '/media/system/' + this.system() + "/" + this.id;
-	}
+  	} else {
+  		return Agave.agaveApiRoot + '/files/' + Agave.agaveVersion + '/media/system/' + this.system() + "/" + this.id;
+  	}
   },
   directoryPath: function() {
     var path = this.get("path");
@@ -82,10 +82,10 @@ IO.File = Agave.Model.extend({
     }
   },
   system: function() {
-	var sys = this.attributes._links.system.href;
-	return sys.substring(sys.lastIndexOf("/") + 1);
+  	var sys = this.attributes._links.system.href;
+  	return sys.substring(sys.lastIndexOf("/") + 1);
   }
-    
+
 });
 
 IO.FilePermissions = Agave.Model.extend({
@@ -95,13 +95,13 @@ IO.FilePermissions = Agave.Model.extend({
     this.path = (options != undefined && 'path' in options) ? options.path : attributes.path;
   },
   url: function() {
-    return "/files/pems/system/" + this.system + "/" + this.path;
+    return "/files/v2/pems/system/" + this.system + "/" + this.path;
   }
 });
 
 IO.History = Agave.Model.extend({
     idAttribute: 'created',
-    urlRoot: "/files/history/"
+    urlRoot: "/files/v2/history/"
 });
 
 IO.HistoryListing = Agave.Collection.extend({
@@ -111,7 +111,7 @@ IO.HistoryListing = Agave.Collection.extend({
     	this.path = (options != undefined && 'path' in options) ? options.path : attributes.path;
   	},
   	url: function() {
-    	return "/files/history/system/" + this.system + "/" + this.path;
+    	return "/files/v2/history/system/" + this.system + "/" + this.path;
   	}
 });
 
@@ -122,7 +122,7 @@ IO.Listing = Agave.Collection.extend({
     this.system = options.system;
   },
   url: function() {
-    return "/files/listings/system/" + this.system + "/" + this.path;
+    return "/files/v2/listings/system/" + this.system + "/" + this.path;
   },
   comparator: function(model) {
     return [model.get("type"), model.get("name")];
@@ -138,12 +138,12 @@ IO.Share = Agave.Model.extend({
     var owner = this.file.get("owner"),
       path = this.file.get("path");
     if (path) {
-      return "/files/pems/system/" + this.system + "/" + path;
+      return "/files/v2/pems/system/" + this.system + "/" + path;
     }
   },
   shareLink: function() {
     if (this.isPublic()) {
-      return Agave.agaveApiRoot + "/files/download/system/" + this.system + "/" + this.file.get("owner") + this.file.get("path");
+      return Agave.agaveApiRoot + "/files/v2/download/system/" + this.system + "/" + this.file.get("owner") + this.file.get("path");
     }
   }
 });
